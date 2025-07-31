@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    user: root
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=pa$$w0rd
+      - KC_LOG_LEVEL=INFO
+      - KC_LOG_OUTPUT=console
+      - KC_HOSTNAME=${KEYCLOAK_DOMIAN}
+      - KEYCLOAK_FRONTEND_URL=https://${KEYCLOAK_DOMIAN}
+      - VIRTUAL_HOST=${KEYCLOAK_DOMIAN}
+      - LETSENCRYPT_HOST=${KEYCLOAK_DOMIAN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - KC_HTTPS_CERTIFICATE_FILE=/path/to/fullchain.pem
+      - KC_HTTPS_CERTIFICATE_KEY_FILE=/path/to/key.pem
+    command: start
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - /var/log/:/opt/keycloak/logs
+      - ./proxy/data/certs:/opt/keycloak/certs
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: superadmin
+      MINIO_ROOT_PASSWORD: superadminpasswd
+      MINIO_API_CORS_ALLOW_ORIGIN: '*'
+      MINIO_PROMETHEUS_AUTH_TYPE: "public"
+      MINIO_PROMETHEUS_URL: "http://prometheus:9090"
+      MINIO_PROMETHEUS_JOB_ID: "minio-job"
+      MINIO_LOG_LEVEL: info
+      VIRTUAL_HOST: ${MINIO_DOMAIN}
+      LETSENCRYPT_HOST: ${MINIO_DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      VIRTUAL_PORT: 9001  # Internal port for reverse proxy
+    entrypoint: ["/bin/sh", "-c", "./minio-entrypoint.sh"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./minio-entrypoint.sh:/minio-entrypoint.sh
+      - minio-data:/data
+      - /root/minio/proxy/data/certs:/root/.minio/certs
+    depends_on:
+      - keycloak
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - minio
+    environment:
+      VIRTUAL_HOST: ${PROMETHEUS_DOMAIN}
+      LETSENCRYPT_HOST: ${PROMETHEUS_DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      VIRTUAL_PORT: 9090  # Internal port for reverse proxy
+
+networks:
+  default:
+    external:
+      name: proxy
+
+volumes:
+  minio-data:
+  keycloak_data:
+  prometheus_data:
