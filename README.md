@@ -1,36 +1,63 @@
-# MinIO + Keycloak + Prometheus Docker Setup
 
-This repository provides a Docker Compose setup to run MinIO (object storage), Keycloak (identity and access management), and Prometheus (monitoring) together. It is designed for local development or testing environments.
+# 🚀 MinIO + Keycloak + Prometheus Docker Setup
 
-## Contents
+![Docker Compose](https://img.shields.io/badge/docker--compose-blue?logo=docker)
+![MinIO](https://img.shields.io/badge/minio-Object%20Storage-red?logo=minio)
+![Keycloak](https://img.shields.io/badge/keycloak-SSO-green?logo=keycloak)
+![Prometheus](https://img.shields.io/badge/prometheus-Monitoring-orange?logo=prometheus)
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/13081560/28248413-2b7e2e2a-6a5e-11e7-8c7b-7a7b6b8e6b8a.png" width="400" alt="MinIO + Keycloak + Prometheus"/>
+</p>
+
+This repository provides a modern Docker Compose stack to run **MinIO** (object storage), **Keycloak** (identity and access management), and **Prometheus** (monitoring) together. Perfect for local development, testing, or learning about cloud-native tools.
+
+
+---
+
+## 📁 Contents
 - `docker-compose.yml`: Defines the services for Keycloak, MinIO, and their configurations.
 - `minio-entrypoint.sh`: Custom entrypoint script for MinIO to ensure proper startup.
 - `prometheus.yml`: Prometheus configuration to scrape MinIO metrics.
 
-## Services
 
-### Keycloak
-- **Image:** quay.io/keycloak/keycloak:latest
-- **Ports:** 8080 (HTTP), 8443 (HTTPS)
-- **Environment:**
-  - Admin credentials, logging, hostname, SSL certs, and reverse proxy settings.
-- **Volumes:**
-  - Persistent data, logs, and SSL certificates.
+## 🧩 Architecture
 
-### MinIO
-- **Image:** minio/minio:latest
-- **Ports:** 9000 (API), 9001 (Console)
-- **Environment:**
-  - Root credentials, CORS, Prometheus integration, logging, and reverse proxy settings.
-- **Entrypoint:** Uses `minio-entrypoint.sh` to delay startup and launch MinIO.
-- **Volumes:**
-  - Entrypoint script, data, and SSL certificates.
+```mermaid
+flowchart LR
+    User((User))
+    subgraph Reverse Proxy / SSL
+        Proxy
+    end
+    Proxy --> Keycloak
+    Proxy --> MinIO
+    User --> Proxy
+    MinIO -- Metrics --> Prometheus
+    Keycloak -- SSO --> MinIO
+```
 
-### Prometheus
-- **Configuration:**
-  - Scrapes MinIO metrics from `minio:9000` using the job name `minio-job`.
+---
 
-## Usage
+## 🛠️ Services
+
+### 🟢 Keycloak
+- **Image:** `quay.io/keycloak/keycloak:latest`
+- **Ports:** `8080` (HTTP), `8443` (HTTPS)
+- **Environment:** Admin credentials, logging, hostname, SSL certs, reverse proxy
+- **Volumes:** Persistent data, logs, SSL certificates
+
+### 🔴 MinIO
+- **Image:** `minio/minio:latest`
+- **Ports:** `9000` (API), `9001` (Console)
+- **Environment:** Root credentials, CORS, Prometheus integration, logging, reverse proxy
+- **Entrypoint:** Uses `minio-entrypoint.sh` to delay startup and launch MinIO
+- **Volumes:** Entrypoint script, data, SSL certificates
+
+### 🟠 Prometheus
+- **Config:** Scrapes MinIO metrics from `minio:9000` using the job name `minio-job`
+
+
+## 🚦 Quick Start
 
 1. **Clone the repository:**
    ```bash
@@ -48,10 +75,16 @@ This repository provides a Docker Compose setup to run MinIO (object storage), K
    - MinIO Console: `http(s)://<MINIO_DOMAIN>:9001`
    - Prometheus: (if added as a service)
 
-## Notes
-- Make sure to provide valid SSL certificates for Keycloak and MinIO if using HTTPS.
+
+---
+
+## 📝 Notes
+- Provide valid SSL certificates for Keycloak and MinIO if using HTTPS.
 - The `minio-entrypoint.sh` script adds a 10-second delay before starting MinIO to ensure dependencies are ready.
 - Prometheus configuration is provided but Prometheus service is not included in the compose file by default.
 
-## License
+
+---
+
+## 📄 License
 MIT
