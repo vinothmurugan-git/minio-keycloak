@@ -6,14 +6,9 @@
 ![Keycloak](https://img.shields.io/badge/keycloak-SSO-green?logo=keycloak)
 ![Prometheus](https://img.shields.io/badge/prometheus-Monitoring-orange?logo=prometheus)
 
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/13081560/28248413-2b7e2e2a-6a5e-11e7-8c7b-7a7b6b8e6b8a.png" width="400" alt="MinIO + Keycloak + Prometheus"/>
-</p>
 
 This repository provides a modern Docker Compose stack to run **MinIO** (object storage), **Keycloak** (identity and access management), and **Prometheus** (monitoring) together. Perfect for local development, testing, or learning about cloud-native tools.
 
-
----
 
 ## 📁 Contents
 - `docker-compose.yml`: Defines the services for Keycloak, MinIO, and their configurations.
@@ -35,8 +30,6 @@ flowchart LR
     MinIO -- Metrics --> Prometheus
     Keycloak -- SSO --> MinIO
 ```
-
----
 
 ## 🛠️ Services
 
@@ -75,16 +68,8 @@ flowchart LR
    - MinIO Console: `http(s)://<MINIO_DOMAIN>:9001`
    - Prometheus: (if added as a service)
 
-
----
-
 ## 📝 Notes
 - Provide valid SSL certificates for Keycloak and MinIO if using HTTPS.
 - The `minio-entrypoint.sh` script adds a 10-second delay before starting MinIO to ensure dependencies are ready.
 - Prometheus configuration is provided but Prometheus service is not included in the compose file by default.
 
-
----
-
-## 📄 License
-MIT
